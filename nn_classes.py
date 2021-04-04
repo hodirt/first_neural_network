@@ -53,6 +53,7 @@ class CategoricalCrossEntropy:
         self.loss = None
         self.average_loss = None
         self.target_class = target_class
+        self.dinputs = None
 
     def calculate_loss(self, predictions, classes):
         """
@@ -72,6 +73,28 @@ class CategoricalCrossEntropy:
         # setting the lowest value as 1e-7 instead of 0, because log(0) will equal negative infinity
         self.loss = -np.sum(one_hot_vectors * np.log(np.clip(predictions, 1e-7, 1 - 1e-7)), axis=1)
         self.average_loss = np.mean(self.loss)
+
+    def backward(self, dvalues, y_true):
+        """
+        :param dvalues: just predicted values?
+        :param y_true:
+        :return:
+        """
+        # number of samples
+        samples = len(dvalues)
+        # Number of labels in every sample
+        # We'll use the first sample to count them
+        labels = len(dvalues[0])
+        # If labels are sparse, turn them into one-hot vecto
+        if len(y_true.shape) == 1:
+            y_true = np.eye(labels)[y_true]
+
+        # Calculate gradient
+        self.dinputs = -y_true / dvalues
+        # Normalize gradient
+        # Optimiser will make a sum, so we are dividing in advance, so after the sum it will be a mean value
+        # and numbers would not be gigantic
+        self.dinputs = self.dinputs / samples
 
 
 class Accuracy:
