@@ -40,12 +40,29 @@ class ActivationReLU:
 class ActivationSoftmax:
     def __init__(self):
         self.output = None
+        self.dinputs = None
 
     def forward(self, inputs):
         inputs = inputs - np.max(inputs, axis=1, keepdims=True)
         e_inputs = np.exp(inputs)
         probabilities = e_inputs / np.sum(e_inputs, axis=1, keepdims=True)
         self.output = probabilities
+
+        # Backward pass
+    def backward(self, dvalues):
+
+        # Create uninitialized array (uninitialized doesn't mean - full of zeroes)
+        self.dinputs = np.empty_like(dvalues)
+
+        for index, (single_output, single_dvalues) in enumerate(zip(self.output, dvalues)):
+            # Flatten output array
+            single_output = single_output.reshape(-1, 1)
+            # Calculate Jacobian matrix of the output
+            jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
+            # Calculate sample-wise gradient
+            # and add it to the array of sample gradients
+            self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
+
 
 
 class CategoricalCrossEntropy:
@@ -85,7 +102,7 @@ class CategoricalCrossEntropy:
         # Number of labels in every sample
         # We'll use the first sample to count them
         labels = len(dvalues[0])
-        # If labels are sparse, turn them into one-hot vecto
+        # If labels are sparse, turn them into one-hot vector
         if len(y_true.shape) == 1:
             y_true = np.eye(labels)[y_true]
 
