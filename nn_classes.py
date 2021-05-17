@@ -42,6 +42,8 @@ class ActivationSoftmax:
         self.output = None
         self.dinputs = None
 
+    # TODO подивитися відео ще раз, чого нам взагалі потрібні експоненти, якщо ми просто
+    # TODO можемо додати всі значення і подім розділити кожне з них на суму
     def forward(self, inputs):
         inputs = inputs - np.max(inputs, axis=1, keepdims=True)
         e_inputs = np.exp(inputs)
