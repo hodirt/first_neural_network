@@ -64,12 +64,10 @@ class ActivationSoftmax:
             self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
 
 
-
 class CategoricalCrossEntropy:
-    def __init__(self, target_class):
+    def __init__(self):
         self.loss = None
         self.average_loss = None
-        self.target_class = target_class
         self.dinputs = None
 
     def calculate_loss(self, predictions, classes):
@@ -125,3 +123,37 @@ class Accuracy:
             classes = np.argmax(classes, axis=1)
         # basically, calculating how many True values compared to all values in the resulting array
         self.accuracy = np.mean(predictions_indices == classes)
+
+
+# Softmax classifier - combined Softmax activation
+# and cross-entropy loss for faster backward step
+class ActivationSoftmaxLossCategoricalCrossentropy():
+    def __init__(self):
+        self.activation = ActivationSoftmax()
+        self.loss = CategoricalCrossEntropy()
+        self.dinputs = None
+
+    def forward(self, inputs, y_true):
+        self.activation.forward(inputs)
+        self.loss.calculate_loss(self.activation.output, y_true)
+
+    def backward(self, dvalues, y_true):
+        samples = len(dvalues)
+
+        # If labels are one-hot encoded,
+        # turn them into discrete values
+        # тобто, якщо це масив масивів, то зробити один список типу [3, 2, 1, 3, 1, 1, 2, ...] з індексами правильної відповіді в кожному з сетів (бетчів) даних
+        if len(y_true.shape) == 2:
+            y_true = np.argmax(y_true, axis=1)
+
+        # Copy so we can safely modify
+        self.dinputs = dvalues.copy()
+
+        # Calculate gradient
+        # на 235 сторінці пояснено, чого ми одиницю віднімаєм
+        # але якщо коротко, то по формулі, ми би мали віднімати one-hot масиви, але так як в таких масивах
+        # крім одного значення решта всі 0, то ми просто віднімаєм ту єдину одиницю по індексу, якому вона знаходиться
+        self.dinputs[range(samples), y_true] -= 1
+        # Normalize gradient
+        self.dinputs = self.dinputs / samples
+

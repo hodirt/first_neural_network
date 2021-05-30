@@ -19,7 +19,7 @@ best_dense1_biases = dense1.biases.copy()
 best_dense2_weights = dense2.weights.copy()
 best_dense2_biases = dense2.biases.copy()
 
-cce = nn_classes.CategoricalCrossEntropy(1)
+cce = nn_classes.CategoricalCrossEntropy()
 acc = nn_classes.Accuracy()
 
 lowest_loss = 9999999
